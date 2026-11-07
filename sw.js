@@ -1,5 +1,5 @@
 // Cache simples para o app abrir rápido e funcionar offline.
-const CACHE = 'recorta-ai-v3';
+const CACHE = 'recorta-ai-v4';
 const FILES = [
   './',
   './index.html',

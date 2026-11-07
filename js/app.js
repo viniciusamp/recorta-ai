@@ -48,6 +48,8 @@ function isVideo(file) {
 
 async function handleFile(file) {
   if (!file) return;
+  if (state.analysis && state.analysis.kind === 'video') P.disposeVideo(state.analysis.source);
+  state.analysis = null;
   state.whole = false;
   state.removeBg = true;
   show('busy');
@@ -57,7 +59,9 @@ async function handleFile(file) {
     if (isVideo(file)) {
       const v = await P.loadVideo(file);
       setBusy('Assistindo a gravação…', 0.05);
+      const t0 = performance.now();
       state.analysis = await P.analyzeVideo(v, (p) => setBusy(null, 0.05 + p * 0.55));
+      console.info(`análise do vídeo: ${Math.round(performance.now() - t0)} ms`);
     } else {
       const img = await P.loadImage(file);
       setBusy('Procurando a figurinha…', 0.3);

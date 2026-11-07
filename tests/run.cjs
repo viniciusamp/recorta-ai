@@ -46,6 +46,24 @@ function containment(det, box) {
 
   for (const [name, info] of Object.entries(meta)) {
     const ctx = await browser.newContext({ ...devices['iPhone 15'], deviceScaleFactor: 1 });
+    if (info.animated) {
+      // Simula o Safari do iPhone: cada "seeked" demora 2,5 s para chegar.
+      await ctx.addInitScript(() => {
+        window.__seeks = 0;
+        const desc = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'currentTime');
+        Object.defineProperty(HTMLMediaElement.prototype, 'currentTime', {
+          get() { return desc.get.call(this); },
+          set(v) { window.__seeks++; desc.set.call(this, v); },
+        });
+        const add = EventTarget.prototype.addEventListener;
+        EventTarget.prototype.addEventListener = function (type, fn, opts) {
+          if (type === 'seeked' && this instanceof HTMLMediaElement) {
+            return add.call(this, type, (e) => setTimeout(() => fn.call(this, e), 2500), opts);
+          }
+          return add.call(this, type, fn, opts);
+        };
+      });
+    }
     const page = await ctx.newPage();
     const errors = [];
     page.on('pageerror', (e) => errors.push(e.message));
@@ -75,6 +93,7 @@ function containment(det, box) {
         corner: px(4, 4),
         center: px(cv.width / 2, cv.height / 2 + cv.height * 0.12),
         removeBg: s.removeBg,
+        seeks: window.__seeks,
         // fração opaca dentro da área desenhada (buracos baixam isso)
         solid: (() => {
           const d = g.getImageData(0, 0, cv.width, cv.height).data;
@@ -98,11 +117,12 @@ function containment(det, box) {
       'centro laranja/opaco': res.center[3] === 255 && res.center[0] > 150,
       '512x512': res.size[0] === 512 && res.size[1] === 512,
       animada: info.animated ? res.frames > 10 && res.type === 'image/gif' : res.type === 'image/png',
+      'vídeo rápido mesmo com seek lento (iPhone)': !info.animated || (ms < 30000 && res.seeks <= 6),
       'sem erros': errors.length === 0,
     };
     const ok = Object.values(checks).every(Boolean);
     if (!ok) failed++;
-    console.log(`${ok ? 'OK  ' : 'FALHOU'} ${name}  (${ms} ms, ${res.count} candidatos, ${res.frames} quadros)`);
+    console.log(`${ok ? 'OK  ' : 'FALHOU'} ${name}  (${ms} ms, ${res.count} candidatos, ${res.frames} quadros${info.animated ? `, ${res.seeks} pulos` : ''})`);
     for (const [k, v] of Object.entries(checks)) if (!v) console.log(`      x ${k}`, k === 'achou a figurinha' ? { det: res.cand, box: info.box, inside, cover } : k === 'sem erros' ? errors : res);
     if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `${name}.png`), fullPage: true });
     await ctx.close();
