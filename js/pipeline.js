@@ -69,12 +69,40 @@ export function analyzeImage(img) {
   return { kind: 'image', source: img, sw, sh, bg, candidates };
 }
 
-export function cutImage(analysis, cand) {
-  const { source, sw, sh, bg } = analysis;
-  const r = padRect(cand, sw, sh);
-  const data = grab(source, r.x, r.y, r.w, r.h);
-  const res = cutout(data, bg, r.keep);
-  const box = alphaBox(res) || { x0: 0, y0: 0, x1: r.w - 1, y1: r.h - 1 };
+/**
+ * Decide qual pedaço da imagem vai virar figurinha.
+ * - whole: a imagem inteira, sem recortar nada;
+ * - removeBg=false: só o retângulo do candidato, com o fundo original;
+ * - padrão: o candidato com folga, para tirar o fundo.
+ * Regiões grandes são reduzidas (a figurinha final tem 512 px).
+ */
+function regionFor(analysis, cand, { whole = false, removeBg = true } = {}) {
+  const { sw, sh } = analysis;
+  let r;
+  if (whole) {
+    r = { x: 0, y: 0, w: sw, h: sh, keep: null };
+  } else if (!removeBg) {
+    r = { x: cand.x0, y: cand.y0, w: cand.x1 - cand.x0 + 1, h: cand.y1 - cand.y0 + 1, keep: null };
+  } else {
+    r = padRect(cand, sw, sh);
+  }
+  const s = r.keep ? 1 : Math.min(1, MAX_PLAIN / Math.max(r.w, r.h));
+  r.dw = Math.max(1, Math.round(r.w * s));
+  r.dh = Math.max(1, Math.round(r.h * s));
+  return r;
+}
+
+const MAX_PLAIN = 1024;
+
+function cutRegion(src, analysis, r) {
+  const data = grab(src, r.x, r.y, r.w, r.h, r.dw, r.dh);
+  return r.keep ? cutout(data, analysis.bg, r.keep) : data;
+}
+
+export function cutImage(analysis, cand, opts) {
+  const r = regionFor(analysis, cand, opts);
+  const res = cutRegion(analysis.source, analysis, r);
+  const box = alphaBox(res) || { x0: 0, y0: 0, x1: r.dw - 1, y1: r.dh - 1 };
   return { frames: [toCanvas(res)], box, stillIndex: 0 };
 }
 
@@ -215,15 +243,14 @@ export async function analyzeVideo(v, onProgress = () => {}) {
   };
 }
 
-export async function cutVideo(analysis, cand, onProgress = () => {}) {
-  const { source: v, sw, sh, bg, window } = analysis;
-  const r = padRect(cand, sw, sh);
+export async function cutVideo(analysis, cand, opts, onProgress = () => {}) {
+  const { source: v, window } = analysis;
+  const r = regionFor(analysis, cand, opts);
   const len = Math.max(1, Math.min(ANIM_FPS * ANIM_SECONDS, Math.round((window.t1 - window.t0) * ANIM_FPS)));
   const cuts = [];
   for (let i = 0; i < len; i++) {
     await seek(v, Math.min(window.t1 - 0.01, window.t0 + i / ANIM_FPS));
-    const data = grab(v, r.x, r.y, r.w, r.h);
-    cuts.push(cutout(data, bg, r.keep));
+    cuts.push(cutRegion(v, analysis, r));
     onProgress((i + 1) / len);
     await tick();
   }
@@ -244,7 +271,7 @@ export async function cutVideo(analysis, cand, onProgress = () => {}) {
       stillIndex = i;
     }
   });
-  if (!box) box = { x0: 0, y0: 0, x1: r.w - 1, y1: r.h - 1 };
+  if (!box) box = { x0: 0, y0: 0, x1: r.dw - 1, y1: r.dh - 1 };
   return { frames: cuts.map(toCanvas), box, stillIndex, delay: Math.round(1000 / ANIM_FPS) };
 }
 

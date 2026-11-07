@@ -164,6 +164,10 @@ h1 { font-size: 34px; line-height: 1.05; letter-spacing: -0.035em; margin: 6px 0
   padding: 7px 12px; border-radius: 9px;
 }
 .segmented button.on { background: var(--card); color: var(--text); }
+.segmented.wide { margin-top: 14px; }
+.segmented.wide button { flex: 1; padding: 10px 12px; font-size: 15px; }
+.segmented.wide button.on { background: var(--accent); color: var(--accent-ink); }
+.options .switches { display: flex; gap: 18px; flex-wrap: wrap; }
 
 .actions { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
 .btn {

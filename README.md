@@ -12,6 +12,8 @@ no próprio celular, dentro do navegador.
    **grave a tela** por uns 3 segundos sem rolar.
 3. No Recorta Aí, escolha o print ou o vídeo. A figurinha é **encontrada e recortada sozinha**.
    Se ele pegar a coisa errada, toque em outra opção na fileira "Não era essa?".
+   - **Imagem inteira**: usa a foto/print/vídeo todo, sem recortar nem tirar fundo.
+   - **Tirar fundo** desligado: recorta só a figurinha, mas mantém o fundo original.
 4. **Salvar figurinha** → **Salvar imagem** (vai para o app Fotos).
 5. No WhatsApp: ícone de figurinha → **＋ Criar** → escolha a imagem → envie.
 

@@ -13,6 +13,8 @@ const state = {
   candIndex: 0,
   cut: null,
   outline: true,
+  removeBg: true,
+  whole: false,
   mode: 'still',
   blob: null,
   url: null,
@@ -46,6 +48,8 @@ function isVideo(file) {
 
 async function handleFile(file) {
   if (!file) return;
+  state.whole = false;
+  state.removeBg = true;
   show('busy');
   setBusy('Abrindo…', 0.02);
   await tick();
@@ -76,10 +80,11 @@ async function choose(i) {
   show('busy');
   setBusy('Recortando…', 0.62);
   await tick();
+  const opts = { whole: state.whole, removeBg: state.removeBg };
   state.cut =
     a.kind === 'video'
-      ? await P.cutVideo(a, a.candidates[i], (p) => setBusy(null, 0.62 + p * 0.3))
-      : P.cutImage(a, a.candidates[i]);
+      ? await P.cutVideo(a, a.candidates[i], opts, (p) => setBusy(null, 0.62 + p * 0.3))
+      : P.cutImage(a, a.candidates[i], opts);
   state.mode = state.cut.frames.length > 1 ? 'anim' : 'still';
   await render();
   renderCandidates();
@@ -110,6 +115,11 @@ async function render() {
   for (const b of document.querySelectorAll('#anim-mode button')) {
     b.classList.toggle('on', b.dataset.mode === state.mode);
   }
+  for (const b of document.querySelectorAll('#crop-mode button')) {
+    b.classList.toggle('on', (b.dataset.crop === 'whole') === state.whole);
+  }
+  $('#removebg-wrap').hidden = state.whole;
+  $('#opt-removebg').checked = state.removeBg;
 }
 
 function renderCandidates() {
@@ -117,7 +127,7 @@ function renderCandidates() {
   const list = $('#cand-list');
   list.innerHTML = '';
   const usable = a.candidates.filter((c) => !c.whole);
-  $('#cand-row').hidden = usable.length < 2;
+  $('#cand-row').hidden = usable.length < 2 || state.whole;
   if (usable.length < 2) return;
   a.candidates.forEach((c, i) => {
     const b = document.createElement('button');
@@ -180,6 +190,27 @@ $('#btn-new').addEventListener('click', () => show('home'));
 $('#opt-outline').addEventListener('change', (e) => {
   state.outline = e.target.checked;
   rerender();
+});
+// Mudanças que pedem um novo recorte (mantendo animada/parada).
+async function recut() {
+  const mode = state.mode;
+  await choose(state.candIndex);
+  if (mode !== state.mode && state.cut.frames.length > 1) {
+    state.mode = mode;
+    await render();
+  }
+}
+for (const b of document.querySelectorAll('#crop-mode button')) {
+  b.addEventListener('click', () => {
+    const whole = b.dataset.crop === 'whole';
+    if (whole === state.whole) return;
+    state.whole = whole;
+    recut();
+  });
+}
+$('#opt-removebg').addEventListener('change', (e) => {
+  state.removeBg = e.target.checked;
+  recut();
 });
 for (const b of document.querySelectorAll('#anim-mode button')) {
   b.addEventListener('click', () => {

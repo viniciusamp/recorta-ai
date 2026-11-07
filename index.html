@@ -56,17 +56,29 @@
         <span id="result-badge" class="badge"></span>
       </div>
 
+      <div id="crop-mode" class="segmented wide" role="group" aria-label="O que usar">
+        <button type="button" data-crop="sticker">Só a figurinha</button>
+        <button type="button" data-crop="whole">Imagem inteira</button>
+      </div>
+
       <div id="cand-row" class="cand-row" hidden>
         <p class="cand-title">Não era essa? Toque em outra:</p>
         <div id="cand-list" class="cand-list"></div>
       </div>
 
       <div class="options">
+        <div class="switches">
         <label class="switch">
           <input type="checkbox" id="opt-outline" checked>
           <span class="track" aria-hidden="true"></span>
           Borda branca
         </label>
+        <label class="switch" id="removebg-wrap">
+          <input type="checkbox" id="opt-removebg" checked>
+          <span class="track" aria-hidden="true"></span>
+          Tirar fundo
+        </label>
+        </div>
         <div id="anim-mode" class="segmented" hidden>
           <button type="button" data-mode="anim">Animada</button>
           <button type="button" data-mode="still">Parada</button>
