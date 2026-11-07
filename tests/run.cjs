@@ -74,11 +74,25 @@ function containment(det, box) {
         size: [cv.width, cv.height],
         corner: px(4, 4),
         center: px(cv.width / 2, cv.height / 2 + cv.height * 0.12),
+        removeBg: s.removeBg,
+        // fração opaca dentro da área desenhada (buracos baixam isso)
+        solid: (() => {
+          const d = g.getImageData(0, 0, cv.width, cv.height).data;
+          let x0 = cv.width, x1 = -1, y0 = cv.height, y1 = -1, op = 0;
+          for (let y = 0; y < cv.height; y++) for (let x = 0; x < cv.width; x++) if (d[(y * cv.width + x) * 4 + 3] > 10) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+          for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (d[(y * cv.width + x) * 4 + 3] > 200) op++;
+          return op / ((x1 - x0 + 1) * (y1 - y0 + 1));
+        })(),
       };
     });
 
     const { inside, cover } = containment(res.cand, info.box);
-    const checks = {
+    const checks = info.photo ? {
+      'foto mantém o fundo': res.removeBg === false,
+      'sem buracos': res.solid > 0.97,
+      '512x512': res.size[0] === 512 && res.size[1] === 512,
+      'sem erros': errors.length === 0,
+    } : {
       'achou a figurinha': inside > 0.9 && cover > 0.3,
       'canto transparente': res.corner[3] === 0,
       'centro laranja/opaco': res.center[3] === 255 && res.center[0] > 150,

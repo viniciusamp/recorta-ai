@@ -9,6 +9,7 @@ import {
   cutout,
   alphaBox,
   alphaSum,
+  looksLikePhoto,
 } from './detect.js';
 import { toCanvas } from './compose.js';
 
@@ -66,7 +67,7 @@ export function analyzeImage(img) {
   const fg = foregroundMask(work, bg);
   let candidates = toSource(findCandidates(work, fg), scale, sw, sh);
   if (!candidates.length) candidates = [{ x0: 0, y0: 0, x1: sw - 1, y1: sh - 1, whole: true }];
-  return { kind: 'image', source: img, sw, sh, bg, candidates };
+  return { kind: 'image', source: img, sw, sh, bg, candidates, photo: looksLikePhoto(work, bg) };
 }
 
 /**
@@ -182,7 +183,9 @@ export async function analyzeVideo(v, onProgress = () => {}) {
 
   // Cores de fundo a partir de um quadro do meio.
   await seek(v, times[count >> 1]);
-  const bg = estimateBackground(grab(v, 0, 0, sw, sh, w, h));
+  const midImg = grab(v, 0, 0, sw, sh, w, h);
+  const bg = estimateBackground(midImg);
+  const photo = looksLikePhoto(midImg, bg);
 
   const frames = [];
   for (let i = 0; i < count; i++) {
@@ -239,6 +242,7 @@ export async function analyzeVideo(v, onProgress = () => {}) {
     bg,
     candidates,
     window: { t0, t1 },
+    photo,
     animated: b > a,
   };
 }

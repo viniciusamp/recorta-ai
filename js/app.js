@@ -64,6 +64,12 @@ async function handleFile(file) {
       await tick();
       state.analysis = P.analyzeImage(img);
     }
+    // Foto de verdade (selfie, story...): começa com a imagem inteira, sem
+    // tirar fundo. O usuário ainda pode trocar para "Só a figurinha".
+    if (state.analysis.photo) {
+      state.whole = true;
+      state.removeBg = false;
+    }
     await choose(0);
   } catch (err) {
     console.error(err);
@@ -119,6 +125,7 @@ async function render() {
     b.classList.toggle('on', (b.dataset.crop === 'whole') === state.whole);
   }
   $('#removebg-wrap').hidden = state.whole;
+  $('#photo-note').hidden = !(state.analysis.photo && state.whole);
   $('#opt-removebg').checked = state.removeBg;
 }
 

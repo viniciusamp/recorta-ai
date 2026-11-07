@@ -168,6 +168,49 @@ export function foregroundMask(img, bg) {
   return fg;
 }
 
+/**
+ * Quanto do "fundo" é liso de verdade. Prints de app (comentários, figurinha
+ * aberta) têm fundo chapado; fotos têm textura/granulado até nas partes escuras.
+ * Devolve { coverage, flat }: fração da tela que é fundo, e fração desse
+ * fundo que é lisa.
+ */
+export function backgroundStats(img, bg) {
+  const w = img.width;
+  const h = img.height;
+  const d = img.data;
+  if (!bg.colors.length) return { coverage: 0, flat: 0, exact: 0 };
+  const { dist } = distanceMap(img, bg.colors);
+  let count = 0;
+  let flat = 0;
+  let exact = 0;
+  for (let y = 0; y < h - 1; y++) {
+    for (let x = 0; x < w - 1; x++) {
+      const i = y * w + x;
+      if (dist[i] >= BG_THRESHOLD) continue;
+      count++;
+      if (dist[i] < 6) exact++;
+      const o = i * 4;
+      let m = 0;
+      for (const q of [o + 4, o + w * 4]) {
+        for (let k = 0; k < 3; k++) m = Math.max(m, Math.abs(d[o + k] - d[q + k]));
+      }
+      if (m <= 3) flat++;
+    }
+  }
+  return {
+    coverage: count / (w * h),
+    flat: count ? flat / count : 0,
+    exact: count ? exact / count : 0,
+  };
+}
+
+/** É uma foto (e não um print com fundo chapado)? */
+export function looksLikePhoto(img, bg) {
+  if (!bg.colors.length) return !bg.hasAlpha;
+  const s = backgroundStats(img, bg);
+  return s.exact < 0.75 || s.flat < 0.8;
+}
+
 // ---------------------------------------------------------------- máscaras
 
 export function dilate(mask, w, h, r) {

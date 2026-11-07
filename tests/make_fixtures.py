@@ -152,6 +152,35 @@ def main():
         img.save(os.path.join(OUT, jname), quality=85)
         meta[jname] = dict(box=box, size=[W, H])
 
+    # Story com foto ocupando a tela toda: cabelo e roupa escuros, com
+    # sombreado e granulado de câmera, encostando nas bordas.
+    rnd = random.Random(5)
+    img = Image.new("RGB", (W, H))
+    px = img.load()
+    for y in range(H):
+        for x in range(W):
+            nx, ny = x / W, y / H
+            n = rnd.gauss(0, 5)
+            hair = ((nx - 0.62) / 0.48) ** 2 + ((ny - 0.37) / 0.25) ** 2 < 1
+            face = ((nx - 0.57) / 0.27) ** 2 + ((ny - 0.35) / 0.15) ** 2 < 1
+            if ny > 0.6:  # roupa
+                v = 22 + 18 * math.sin(nx * 9 + ny * 5) + n
+                px[x, y] = (int(v), int(v * 0.95), int(v * 1.15))
+            elif face:
+                v = 0.85 + 0.12 * math.sin(nx * 7) + n / 100
+                px[x, y] = (int(230 * v), int(180 * v), int(155 * v))
+            elif hair:
+                v = 25 + 15 * math.sin(nx * 40 + ny * 12) + n
+                px[x, y] = (int(v), int(v * 0.9), int(v * 0.85))
+            else:  # parede/sofá
+                v = 0.7 + 0.2 * math.sin(nx * 3 + ny * 2) + n / 120
+                px[x, y] = (int(215 * v), int(195 * v), int(165 * v))
+    d = ImageDraw.Draw(img)
+    d.rounded_rectangle([W * 0.3, H * 0.75, W * 0.7, H * 0.85], radius=30, fill=(255, 255, 255))
+    d.text((W * 0.5, H * 0.79), "Vamos aproveitar o feriado", font=font(36), fill=(30, 30, 30), anchor="mm")
+    img.save(os.path.join(OUT, "story-foto.jpg"), quality=88)
+    meta["story-foto.jpg"] = dict(box=[0, 0, W, H], size=[W, H], photo=True)
+
     # Gravação de tela: rola, para 3,5 s com a figurinha animando, rola de novo.
     VW, VH, FPS = 590, 1278, 30
     frames_dir = os.path.join(OUT, "frames")
