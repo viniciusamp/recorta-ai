@@ -1,0 +1,88 @@
+# Gera o app de iPhone (.ipa, sem assinatura) numa máquina Mac do GitHub.
+# Repositório público = máquinas grátis. O SideStore assina com o seu Apple ID
+# na hora de instalar.
+name: App iPhone
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "ios/**"
+      - "js/**"
+      - "css/**"
+      - "vendor/**"
+      - "icons/**"
+      - "index.html"
+      - ".github/workflows/ios.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar XcodeGen
+        run: brew install xcodegen
+
+      - name: Gerar o projeto Xcode
+        working-directory: ios
+        run: xcodegen generate
+
+      - name: Compilar (sem assinatura)
+        working-directory: ios
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project RecortaAi.xcodeproj \
+            -scheme RecortaAi \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            build > build.log 2>&1 || true
+          grep -E "error:|BUILD (SUCCEEDED|FAILED)" build.log || true
+          if ! test -d build/Build/Products/Release-iphoneos/RecortaAi.app; then
+            echo "---- fim do log ----"
+            tail -120 build.log
+            exit 1
+          fi
+
+      - name: Conferir o app
+        working-directory: ios
+        run: |
+          APP=build/Build/Products/Release-iphoneos/RecortaAi.app
+          ls "$APP"
+          test -f "$APP/web/index.html"
+          test -f "$APP/web/vendor/webp/webp_enc.wasm"
+          /usr/libexec/PlistBuddy -c "Print :LSApplicationQueriesSchemes" "$APP/Info.plist"
+
+      - name: Montar o .ipa
+        working-directory: ios
+        run: |
+          mkdir -p Payload
+          cp -R build/Build/Products/Release-iphoneos/RecortaAi.app Payload/
+          zip -qry RecortaAi.ipa Payload
+          ls -lh RecortaAi.ipa
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RecortaAi-ipa
+          path: ios/RecortaAi.ipa
+
+      - name: Publicar para download
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: app-${{ github.run_number }}
+          name: "App iPhone #${{ github.run_number }}"
+          make_latest: true
+          files: ios/RecortaAi.ipa
+          body: |
+            App do Recorta Aí para iPhone (sem assinatura).
+            Instale pelo SideStore: veja o passo a passo no README.
+            Versão do código: ${{ github.sha }}

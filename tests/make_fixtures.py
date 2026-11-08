@@ -113,11 +113,12 @@ def screen(theme, W, H, t=0.0, scroll=0, sticker_t=None):
             yy += 21 * u
         if i == 2:  # este comentário tem a figurinha
             size = int(120 * u)
-            cx, cy = int(tx + size / 2 + 6 * u), int(yy + size / 2 + 8 * u)
+            # as orelhas sobem ~0,7 do tamanho acima do centro; deixa um respiro
+            cx, cy = int(tx + size / 2 + 6 * u), int(yy + size * 0.72 + 8 * u)
             sticker(draw, cx, cy, size, sticker_t if sticker_t is not None else 0.3)
             pad = size * 0.75
             box = [cx - pad, cy - pad, cx + pad, cy + pad]
-            yy += size + 22 * u
+            yy += size * 1.25 + 22 * u
         draw.text((tx, yy + 2 * u), "Responder", font=f_small, fill=th["sub"])
         # coração de curtida à direita
         hx, hy = W - 26 * u, y + 24 * u

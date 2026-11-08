@@ -1,0 +1,56 @@
+# Projeto do app de iPhone, gerado pelo XcodeGen (o .xcodeproj não fica no git).
+# O app mostra o mesmo Recorta Aí do site, copiado para dentro dele na pasta "web".
+name: RecortaAi
+options:
+  bundleIdPrefix: io.github.viniciusamp
+  deploymentTarget:
+    iOS: "15.0"
+settings:
+  base:
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.0"
+targets:
+  RecortaAi:
+    type: application
+    platform: iOS
+    sources:
+      - path: RecortaAi
+    info:
+      path: RecortaAi/Info.plist
+      properties:
+        CFBundleDisplayName: "Recorta Aí"
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        LSRequiresIPhoneOS: true
+        LSApplicationQueriesSchemes: [whatsapp]
+        NSPhotoLibraryUsageDescription: "Para escolher prints e gravações de tela que viram figurinhas."
+        NSPhotoLibraryAddUsageDescription: "Para salvar suas figurinhas no app Fotos."
+        NSCameraUsageDescription: "Para tirar uma foto e transformar em figurinha."
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UIRequiresFullScreen: true
+        UIStatusBarStyle: UIStatusBarStyleLightContent
+        ITSAppUsesNonExemptEncryption: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.viniciusamp.recortaai
+        PRODUCT_NAME: RecortaAi
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+        GENERATE_INFOPLIST_FILE: NO
+    postBuildScripts:
+      - name: Copiar o site para dentro do app
+        basedOnDependencyAnalysis: false
+        script: |
+          set -e
+          DEST="${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/web"
+          SRC="${SRCROOT}/.."
+          rm -rf "$DEST"
+          mkdir -p "$DEST"
+          cp "$SRC/index.html" "$SRC/manifest.webmanifest" "$DEST/"
+          cp -R "$SRC/css" "$SRC/js" "$SRC/vendor" "$SRC/icons" "$DEST/"
+          echo "Site copiado para $DEST"
+    scheme: {}

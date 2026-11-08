@@ -1,5 +1,5 @@
 // Cache simples para o app abrir rápido e funcionar offline.
-const CACHE = 'recorta-ai-v4';
+const CACHE = 'recorta-ai-v5';
 const FILES = [
   './',
   './index.html',
@@ -8,6 +8,12 @@ const FILES = [
   './js/pipeline.js',
   './js/detect.js',
   './js/compose.js',
+  './js/webp.js',
+  './js/packs.js',
+  './js/store.js',
+  './js/native.js',
+  './vendor/webp/webp_enc.js',
+  './vendor/webp/webp_enc.wasm',
   './vendor/gifenc.esm.js',
   './manifest.webmanifest',
   './icons/apple-touch-icon.png',

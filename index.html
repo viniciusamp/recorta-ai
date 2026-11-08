@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Recorta Aí</title>
-  <meta name="description" content="Transforme prints e gravações de tela em figurinhas para o WhatsApp. Grátis e sem anúncio.">
+  <meta name="description" content="Monte pacotes de figurinhas a partir de prints e gravações de tela e mande para o WhatsApp. Grátis e sem anúncio.">
   <meta name="theme-color" content="#16121f">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
@@ -19,27 +19,38 @@
 <body>
   <main class="app">
     <header class="top">
+      <button type="button" id="btn-back" class="back" hidden aria-label="Voltar">‹</button>
       <div class="logo"><span class="logo-mark">✂</span> Recorta Aí</div>
     </header>
 
-    <!-- Início -->
+    <!-- Início: nova figurinha + meus pacotes -->
     <section id="screen-home" class="screen">
-      <h1>Do print pra figurinha<br><span class="hl">em um toque.</span></h1>
-      <p class="lead">Mande um print ou uma gravação de tela. O Recorta Aí acha a figurinha, recorta sozinho e deixa pronta pro WhatsApp. Sem anúncio e sem pagar nada.</p>
+      <h1>Seus pacotes de<br><span class="hl">figurinhas.</span></h1>
+      <p class="lead">Mande prints ou gravações de tela. O Recorta Aí acha a figurinha, recorta sozinho e guarda no pacote. Depois é um toque para mandar tudo pro WhatsApp.</p>
 
       <label class="pick">
-        <input id="file" type="file" accept="image/*,video/*">
+        <input id="file" type="file" accept="image/*,video/*" multiple>
         <span class="pick-icon" aria-hidden="true">＋</span>
-        <span class="pick-title">Escolher print ou vídeo</span>
-        <span class="pick-sub">Captura de tela, foto ou gravação de tela</span>
+        <span class="pick-title">Nova figurinha</span>
+        <span class="pick-sub">Escolha um ou vários prints/vídeos</span>
       </label>
 
-      <ol class="steps">
-        <li><b>No TikTok</b>, deixe a figurinha aparecendo na tela (nos comentários, por exemplo) e tire um print. Se ela for animada, grave a tela por uns 3 segundos sem mexer.</li>
-        <li><b>Aqui</b>, escolha o print ou o vídeo. A figurinha é encontrada sozinha.</li>
-        <li><b>Salve</b> e crie a figurinha no WhatsApp.</li>
-      </ol>
-      <p class="tip">Dica: com o TikTok no modo escuro o recorte fica ainda mais limpo.</p>
+      <div class="section-head">
+        <h2>Meus pacotes</h2>
+        <button type="button" id="btn-new-pack" class="link">＋ Novo pacote</button>
+      </div>
+      <div id="pack-list" class="pack-list"></div>
+      <p id="pack-empty" class="empty">Nenhum pacote ainda. Faça a primeira figurinha e ela vira um pacote.</p>
+
+      <details class="howto">
+        <summary>Dicas</summary>
+        <ol>
+          <li><b>No TikTok</b>, deixe a figurinha na tela (nos comentários, por exemplo) e tire um print. Se for animada, grave a tela por uns 3 segundos sem mexer.</li>
+          <li>Escolhendo <b>vários arquivos</b> de uma vez, o Recorta Aí recorta todos sozinho e coloca no pacote.</li>
+          <li>Com o TikTok no modo escuro, o recorte fica ainda mais limpo.</li>
+          <li>Um pacote é todo de figurinhas <b>paradas</b> ou todo de <b>animadas</b> (regra do WhatsApp), com 3 a 30 figurinhas.</li>
+        </ol>
+      </details>
     </section>
 
     <!-- Processando -->
@@ -49,7 +60,7 @@
       <div class="progress"><div id="busy-bar"></div></div>
     </section>
 
-    <!-- Resultado -->
+    <!-- Resultado de uma figurinha -->
     <section id="screen-result" class="screen" hidden>
       <div class="result-card">
         <div class="checker"><img id="result-img" alt="Figurinha pronta"></div>
@@ -70,16 +81,16 @@
 
       <div class="options">
         <div class="switches">
-        <label class="switch">
-          <input type="checkbox" id="opt-outline" checked>
-          <span class="track" aria-hidden="true"></span>
-          Borda branca
-        </label>
-        <label class="switch" id="removebg-wrap">
-          <input type="checkbox" id="opt-removebg" checked>
-          <span class="track" aria-hidden="true"></span>
-          Tirar fundo
-        </label>
+          <label class="switch">
+            <input type="checkbox" id="opt-outline" checked>
+            <span class="track" aria-hidden="true"></span>
+            Borda branca
+          </label>
+          <label class="switch" id="removebg-wrap">
+            <input type="checkbox" id="opt-removebg" checked>
+            <span class="track" aria-hidden="true"></span>
+            Tirar fundo
+          </label>
         </div>
         <div id="anim-mode" class="segmented" hidden>
           <button type="button" data-mode="anim">Animada</button>
@@ -87,27 +98,51 @@
         </div>
       </div>
 
-      <div class="actions">
-        <button type="button" id="btn-save" class="btn primary">Salvar figurinha</button>
-        <button type="button" id="btn-copy" class="btn">Copiar</button>
+      <button type="button" id="btn-add" class="btn primary full">Adicionar ao pacote</button>
+      <div class="actions two">
+        <button type="button" id="btn-save" class="btn">Salvar imagem</button>
+        <button type="button" id="btn-new" class="btn">Fazer outra</button>
+      </div>
+    </section>
+
+    <!-- Um pacote -->
+    <section id="screen-pack" class="screen" hidden>
+      <div class="pack-head">
+        <button type="button" id="pack-name" class="pack-name" aria-label="Renomear pacote"></button>
+        <p id="pack-meta" class="pack-meta"></p>
       </div>
 
-      <p id="anim-note" class="note" hidden>
-        No iPhone, o WhatsApp cria figurinhas a partir de imagens paradas. O GIF animado serve para mandar como GIF; para virar figurinha agora, use <b>Parada</b>.
-      </p>
+      <div id="pack-grid" class="pack-grid"></div>
 
-      <details class="howto" open>
-        <summary>Como colocar no WhatsApp</summary>
-        <ol>
-          <li>Toque em <b>Salvar figurinha</b> e depois em <b>Salvar imagem</b>. Ela vai para o app Fotos.</li>
-          <li>No WhatsApp, abra qualquer conversa e toque no ícone de figurinha, dentro do campo de texto.</li>
-          <li>Toque em <b>＋ Criar</b> e escolha a imagem que você salvou.</li>
-          <li>Envie. A figurinha fica guardada nas suas figurinhas (segure nela e toque na estrela para favoritar).</li>
-        </ol>
-      </details>
+      <label class="btn add-more">
+        <input id="pack-file" type="file" accept="image/*,video/*" multiple>
+        ＋ Adicionar figurinhas
+      </label>
 
-      <button type="button" id="btn-new" class="btn ghost">Fazer outra</button>
+      <button type="button" id="btn-whatsapp" class="btn primary full whatsapp">Adicionar ao WhatsApp</button>
+      <p id="pack-hint" class="note center"></p>
+
+      <div class="actions two">
+        <button type="button" id="btn-save-all" class="btn">Salvar todas</button>
+        <button type="button" id="btn-delete-pack" class="btn danger">Excluir pacote</button>
+      </div>
     </section>
+
+    <!-- Folha (menu de baixo) -->
+    <div id="sheet" class="sheet" hidden>
+      <div class="sheet-backdrop" data-close></div>
+      <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+        <div class="sheet-grip" aria-hidden="true"></div>
+        <h3 id="sheet-title"></h3>
+        <p id="sheet-text" class="sheet-text"></p>
+        <input id="sheet-input" class="sheet-input" type="text" maxlength="128" hidden>
+        <div id="sheet-items" class="sheet-items"></div>
+        <div class="sheet-actions">
+          <button type="button" id="sheet-cancel" class="btn" data-close>Cancelar</button>
+          <button type="button" id="sheet-ok" class="btn primary" hidden>OK</button>
+        </div>
+      </div>
+    </div>
 
     <div id="toast" class="toast" role="status" hidden></div>
   </main>

@@ -4,22 +4,49 @@ Transforma **prints e gravações de tela** (do TikTok ou de qualquer app) em
 **figurinhas para o WhatsApp**. Grátis, sem anúncio e sem servidor: tudo roda
 no próprio celular, dentro do navegador.
 
-## Como usar (iPhone)
+## App para iPhone (pacotes direto no WhatsApp)
 
-1. Abra o site no **Safari** → botão de compartilhar → **Adicionar à Tela de Início**.
-   Ele vira um ícone igual a um app.
-2. No TikTok, deixe a figurinha na tela e **tire um print**. Se for animada,
-   **grave a tela** por uns 3 segundos sem rolar.
-3. No Recorta Aí, escolha o print ou o vídeo. A figurinha é **encontrada e recortada sozinha**.
-   Se ele pegar a coisa errada, toque em outra opção na fileira "Não era essa?".
-   - **Imagem inteira**: usa a foto/print/vídeo todo, sem recortar nem tirar fundo.
-   - **Tirar fundo** desligado: recorta só a figurinha, mas mantém o fundo original.
-4. **Salvar figurinha** → **Salvar imagem** (vai para o app Fotos).
-5. No WhatsApp: ícone de figurinha → **＋ Criar** → escolha a imagem → envie.
+O site sozinho não consegue mandar pacotes para o WhatsApp: só um app instalado
+consegue. Por isso existe o app do Recorta Aí, que roda as mesmas telas do site e
+acrescenta o botão **Adicionar ao WhatsApp**.
 
-> Animadas: o site gera um GIF animado. No iPhone, o WhatsApp só cria figurinhas a partir de
-> imagens paradas, então para virar figurinha use o modo **Parada**. Figurinha animada de verdade
-> precisa de um app nativo (ideia para uma fase 2).
+O que dá para fazer no app:
+
+- montar **pacotes** (3 a 30 figurinhas, todas paradas ou todas animadas);
+- escolher **vários prints/vídeos de uma vez**: o app recorta tudo sozinho;
+- figurinhas **animadas de verdade** (WebP animado, como o WhatsApp exige);
+- trocar o **emoji** de cada figurinha e escolher o **ícone** do pacote;
+- **Adicionar ao WhatsApp**: o WhatsApp abre pedindo para confirmar o pacote.
+
+### Instalar de graça (SideStore)
+
+O GitHub gera o app sozinho a cada mudança (aba **Actions** → "App iPhone") e
+publica o arquivo em **Releases**:
+`https://github.com/viniciusamp/recorta-ai/releases/latest/download/RecortaAi.ipa`
+
+Para instalar sem pagar a Apple, use o [SideStore](https://docs.sidestore.io/docs/installation/prerequisites)
+com o seu Apple ID:
+
+1. **No iPhone**: instale o app **LocalDevVPN** (App Store).
+2. **No computador** (Windows ou Mac): instale o **iloader** (e, no Windows, o **iTunes**),
+   ligue o iPhone no cabo e use o iloader para instalar o **SideStore** com seu Apple ID.
+   Siga o [guia oficial](https://docs.sidestore.io/docs/installation/prerequisites).
+3. **No iPhone**: em Ajustes → Geral → VPN e Gerenciamento de Dispositivo, confie no seu
+   Apple ID. Ative o **Modo Desenvolvedor** se o iPhone pedir.
+4. **No iPhone**: abra o link do `RecortaAi.ipa` acima no Safari, baixe, toque em
+   Compartilhar → **SideStore** (ou, no SideStore, "+" e escolha o arquivo). Deixe o
+   LocalDevVPN ligado na hora de instalar.
+
+Com Apple ID gratuito, o app vale **7 dias**: abra o SideStore (com o LocalDevVPN ligado)
+e toque em **Refresh** para renovar, sem computador. Seus pacotes ficam guardados.
+
+## Como usar no navegador (sem app)
+
+1. Abra `https://viniciusamp.github.io/recorta-ai/` no **Safari** → Compartilhar →
+   **Adicionar à Tela de Início**.
+2. Mande prints ou gravações; monte os pacotes normalmente.
+3. Sem o app, use **Salvar todas** e crie as figurinhas pelo próprio WhatsApp
+   (figurinhas → ＋ Criar).
 
 ## Como funciona
 
@@ -60,7 +87,8 @@ rodando no topo, avatares, textos) e conferem se a figurinha certa é achada e r
 pip install pillow        # e ter o ffmpeg instalado
 python3 tests/make_fixtures.py
 npm i -D playwright && npx playwright install chromium   # se ainda não tiver
-node tests/run.cjs
+node tests/run.cjs      # detecção e recorte
+node tests/packs.cjs    # pacotes + JSON do WhatsApp (simula o app do iPhone)
 ```
 
 ## Estrutura
@@ -72,5 +100,11 @@ node tests/run.cjs
 | `js/pipeline.js` | Abre imagem/vídeo, analisa quadros, recorta o candidato |
 | `js/detect.js` | Fundo, componentes, nota dos candidatos, recorte |
 | `js/compose.js` | Monta 512×512, borda branca, PNG/GIF |
+| `js/webp.js` | WebP parado/animado nos limites do WhatsApp (libwebp em WebAssembly) |
+| `js/packs.js`, `js/store.js` | Pacotes: montar, guardar, validar e mandar pro WhatsApp |
+| `js/native.js` | Ponte com o app do iPhone |
+| `ios/` | App de iPhone (Swift): mostra o site e manda o pacote pro WhatsApp |
+| `.github/workflows/ios.yml` | Gera o `.ipa` numa máquina Mac do GitHub |
 | `vendor/gifenc.esm.js` | Encoder de GIF ([gifenc](https://github.com/mattdesl/gifenc), MIT) |
+| `vendor/webp/` | Encoder WebP ([libwebp](https://chromium.googlesource.com/webm/libwebp), BSD, via [jSquash](https://github.com/jamsinclair/jSquash), Apache 2.0) |
 | `sw.js`, `manifest.webmanifest` | Funciona offline e instala na tela de início |

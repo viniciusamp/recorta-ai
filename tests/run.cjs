@@ -92,6 +92,12 @@ function containment(det, box) {
         size: [cv.width, cv.height],
         corner: px(4, 4),
         center: px(cv.width / 2, cv.height / 2 + cv.height * 0.12),
+        orange: (() => {
+          const d = g.getImageData(0, 0, cv.width, cv.height).data;
+          let n = 0;
+          for (let o = 0; o < d.length; o += 4) if (d[o + 3] > 200 && d[o] > 200 && d[o + 1] > 100 && d[o + 1] < 180 && d[o + 2] < 90) n++;
+          return n / (cv.width * cv.height);
+        })(),
         removeBg: s.removeBg,
         seeks: window.__seeks,
         // fração opaca dentro da área desenhada (buracos baixam isso)
@@ -114,7 +120,7 @@ function containment(det, box) {
     } : {
       'achou a figurinha': inside > 0.9 && cover > 0.3,
       'canto transparente': res.corner[3] === 0,
-      'centro laranja/opaco': res.center[3] === 255 && res.center[0] > 150,
+      'figurinha laranja ocupa boa parte': res.orange > 0.25,
       '512x512': res.size[0] === 512 && res.size[1] === 512,
       animada: info.animated ? res.frames > 10 && res.type === 'image/gif' : res.type === 'image/png',
       'vídeo rápido mesmo com seek lento (iPhone)': !info.animated || (ms < 30000 && res.seeks <= 6),
